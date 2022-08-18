@@ -63,8 +63,8 @@ class _InfoUserState extends State<InfoUser> implements ApiStatusLogin, UploadSt
                     top: 30,
                     child: InkWell(
                       onTap: () {
-                        kNavigator(context, Setting());
-                        // value.signOut(context);
+                        // kNavigator(context, Setting());
+                        value.signOut(context);
                       },
                       child: const Image(
                         height: 40,
@@ -267,7 +267,7 @@ class _InfoUserState extends State<InfoUser> implements ApiStatusLogin, UploadSt
                                               child: TextField(
                                                 enabled: false,
                                                 controller: value
-                                                    .phoneNumberController,
+                                                    .phoneNumbereditController,
                                                 textAlign: TextAlign.center,
                                                 decoration: InputDecoration(
                                                   fillColor: Colors.white,
@@ -332,7 +332,7 @@ class _InfoUserState extends State<InfoUser> implements ApiStatusLogin, UploadSt
                                         ),
                                         InkWell(
                                           onTap: () {
-                                            print(value.phoneNumberController.text);
+                                            print(value.phoneNumbereditController.text);
                                             //context.read<ApiService>().signOut(context);
                                             value.occupationController.text =
                                             data['occupation'];
@@ -352,17 +352,17 @@ class _InfoUserState extends State<InfoUser> implements ApiStatusLogin, UploadSt
                                                 .isEmpty) {
                                               value.fullNameController.text =
                                               data['name'];
-                                              value.phoneNumberController.text =
+                                              value.phoneNumbereditController.text =
                                               data['phonenumber'];
                                               value.signUpUser();
                                               print('1');
                                             } else
-                                            if (value.phoneNumberController
+                                            if (value.phoneNumbereditController
                                                 .text.isEmpty) {
-                                              value.phoneNumberController.text =
+                                              value.phoneNumbereditController.text =
                                               data['phonenumber'];
                                               print(
-                                                  value.phoneNumberController);
+                                                  value.phoneNumbereditController);
                                               value.signUpUser();
                                               print('2');
                                             } else {
@@ -370,9 +370,10 @@ class _InfoUserState extends State<InfoUser> implements ApiStatusLogin, UploadSt
                                               print('3');
                                               value.signUpUser();
                                               print(
-                                                  value.phoneNumberController);
+                                                  value.phoneNumbereditController);
                                             }
                                             print(value.auth.currentUser!.uid);
+                                            value.InfoUser();
                                           },
                                           child: Container(
                                             width: 200,

@@ -44,6 +44,7 @@ class ApiService extends ChangeNotifier {
   TextEditingController location = TextEditingController();
   TextEditingController agenumber = TextEditingController();
 
+
   //--------------------------------------------------------//
   TextEditingController get getfullname => fullname;
 
@@ -112,6 +113,8 @@ class ApiService extends ChangeNotifier {
   TextEditingController phoneNumberController = TextEditingController();
   TextEditingController get getPhoneNumberController => phoneNumberController;
 
+  TextEditingController phoneNumbereditController = TextEditingController();
+  TextEditingController get getPhoneNumbereditController => phoneNumbereditController;
 /////////////////////verification_code//////////////////
   TextEditingController codeController = TextEditingController();
 
@@ -431,9 +434,15 @@ class ApiService extends ChangeNotifier {
           print(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
+          isWaitingForCode = false;
+          isloading = false;
+          myVerificationId = "";
+          notifyListeners();
           if (e.code == 'invalid-phone-number') {
+            ModeSnackBar.show(context, 'The provided phone number is not valid.', SnackBarMode.error);
             print('The provided phone number is not valid.');
           } else {
+            ModeSnackBar.show(context, e.code, SnackBarMode.error);
             print(e);
           }
         },
@@ -452,32 +461,45 @@ class ApiService extends ChangeNotifier {
       );
     } else {
       if (myVerificationId != '-1') {
-        PhoneAuthCredential credential = PhoneAuthProvider.credential(
-            verificationId: myVerificationId, smsCode: codeController.text);
-        UserCredential userCredential =
-        await auth.signInWithCredential(credential);
-        print(userCredential.user);
-        print(auth.currentUser);
-        // Map<String, dynamic> newMap = Map();
-        // newMap['phone_number'] = auth.currentUser!.phoneNumber;
-        // fs.collection('users').add(newMap).then((v) {
-        //   notifyListeners();
-        //   print(v);
-        // });
-        await fs.collection('users').doc(myUser).get().then((value){
+        try{
+          PhoneAuthCredential credential = PhoneAuthProvider.credential(
+              verificationId: myVerificationId, smsCode: codeController.text);
+          UserCredential userCredential =
+          await auth.signInWithCredential(credential);
+          print(userCredential.user);
+          print(auth.currentUser);
+          // Map<String, dynamic> newMap = Map();
+          // newMap['phone_number'] = auth.currentUser!.phoneNumber;
+          // fs.collection('users').add(newMap).then((v) {
+          //   notifyListeners();
+          //   print(v);
+          // });
+          await fs.collection('users').doc(myUser).get().then((value){
+            isloading = false;
+            if(value.data() == null){
+              kNavigator(context, InfoLogin(visible: false,));
+            }
+            else{
+              name = value.get('name');
+              image = value.get('image');
+              kNavigator(context, const NavigateBar());
+            }
+          });
+
+          // Sign the user in (or link) with the credential
+          await auth.signInWithCredential(credential);
+        }on FirebaseAuthException catch  (e){
           isloading = false;
-          if(value.data() == null){
-            kNavigator(context, InfoLogin(visible: false,));
+          notifyListeners();
+          if(e.code == 'invalid-verification-code'){
+            ModeSnackBar.show(context, 'The sms verification code invalid.', SnackBarMode.error);
           }
           else{
-            name = value.get('name');
-            image = value.get('image');
-            kNavigator(context, const NavigateBar());
+            ModeSnackBar.show(context, e.code, SnackBarMode.error);
+            print(e);
           }
-        });
+        }
 
-        // Sign the user in (or link) with the credential
-        await auth.signInWithCredential(credential);
       }
     }
     isWaitingForCode = true;
@@ -486,18 +508,26 @@ class ApiService extends ChangeNotifier {
 
   verifynumber(context) async {
     isloading = true;
+
     if (isWaitingForCode == false) {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: phoneNumberController.text,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          await auth.signInWithCredential(credential);
+          await (auth.currentUser)!.updatePhoneNumber(credential);
+          // await auth.signInWithCredential(credential);
 
           print(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
+          isWaitingForCode = false;
+          isloading = false;
+          myVerificationId = "";
+          notifyListeners();
           if (e.code == 'invalid-phone-number') {
+            ModeSnackBar.show(context, 'The provided phone number is not valid.', SnackBarMode.error);
             print('The provided phone number is not valid.');
           } else {
+            ModeSnackBar.show(context, e.code, SnackBarMode.error);
             print(e);
           }
         },
@@ -516,26 +546,42 @@ class ApiService extends ChangeNotifier {
       );
     } else {
       if (myVerificationId != '-1') {
-        PhoneAuthCredential credential = PhoneAuthProvider.credential(
-            verificationId: myVerificationId, smsCode: codeController.text);
-        UserCredential userCredential =
-        await auth.signInWithCredential(credential);
-        print(userCredential.user);
-        print(auth.currentUser);
-        // Map<String, dynamic> newMap = Map();
-        // newMap['phone_number'] = auth.currentUser!.phoneNumber;
-        // fs.collection('users').add(newMap).then((v) {
-        //   notifyListeners();
-        //   print(v);
-        // });
-        isloading = false;
-        codeController.text = "";
-        isWaitingForCode = false;
-        notifyListeners();
-        kNavigatorBack(context);
+        try{
+          PhoneAuthCredential credential = PhoneAuthProvider.credential(
+              verificationId: myVerificationId, smsCode: codeController.text);
+          await (auth.currentUser)!.updatePhoneNumber(credential);
+          // UserCredential userCredential =
+          // await auth.signInWithCredential(credential);
+          print(credential.token);
+          print(auth.currentUser);
+          // Map<String, dynamic> newMap = Map();
+          // newMap['phone_number'] = auth.currentUser!.phoneNumber;
+          // fs.collection('users').add(newMap).then((v) {
+          //   notifyListeners();
+          //   print(v);
+          // });
+          isloading = false;
+          codeController.text = "";
+          phoneNumbereditController.text = phoneNumberController.text;
+          isWaitingForCode = false;
+          myVerificationId = "";
+          notifyListeners();
+          kNavigatorBack(context);
 
-        // Sign the user in (or link) with the credential
-        // await auth.signInWithCredential(credential);
+          // Sign the user in (or link) with the credential
+          // await auth.signInWithCredential(credential);
+        }on FirebaseAuthException catch  (e){
+          isloading = false;
+          notifyListeners();
+          if(e.code == 'invalid-verification-code'){
+            ModeSnackBar.show(context, 'The sms verification code invalid.', SnackBarMode.error);
+          }
+          else{
+            ModeSnackBar.show(context, e.code, SnackBarMode.error);
+            print(e);
+          }
+        }
+
       }
     }
     isWaitingForCode = true;
